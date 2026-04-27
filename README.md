@@ -4,6 +4,8 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Project Status: Active](https://img.shields.io/badge/status-active-green.svg)](https://github.com/Teeflo/asuswrt-mcp)
 
+mcp-name: io.github.teefloo/asuswrt-mcp
+
 Model Context Protocol (MCP) server for secure, controlled administration of AsusWRT and AsusWRT-Merlin routers via SSH.
 
 ## Overview
@@ -120,7 +122,7 @@ ASUSWRT_SSH_PASSWORD=your_password
 ### Run the MCP server
 
 ```bash
-# Standardstdio mode
+# Standard stdio mode
 python -m asuswrt_mcp.server
 
 # Or use the entry point
