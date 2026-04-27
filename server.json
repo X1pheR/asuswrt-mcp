@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.teefloo/asuswrt-mcp",
-  "description": "Model Context Protocol server for secure AsusWRT router administration via SSH. Provides 42+ read-only monitoring tools and guarded mutation tools for managing AsusWRT/Merlin routers.",
+  "description": "Secure AsusWRT router administration via SSH — 42+ tools, guarded mutations",
   "repository": {
     "url": "https://github.com/teefloo/asuswrt-mcp",
     "source": "github"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "asuswrt-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "transport": {
         "type": "stdio"
       },
