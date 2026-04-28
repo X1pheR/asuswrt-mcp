@@ -66,8 +66,8 @@ class AsusRouterSshClient:
                     timeout=connect_timeout,
                     banner_timeout=banner_timeout,
                     auth_timeout=auth_timeout,
-                    look_for_keys=key_filename is None,
-                    allow_agent=True,
+                    look_for_keys=False,
+                    allow_agent=False,
                 )
                 self._client = client
                 return self
