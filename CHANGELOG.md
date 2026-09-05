@@ -6,6 +6,13 @@ All notable downstream changes are recorded here.
 
 No unreleased downstream changes.
 
+## [0.2.1] - 2026-09-05
+
+### Security
+
+- Require SSH host-key verification for every router connection. Unknown host keys are rejected against the local trusted SSH host-key store; the previous insecure automatic host-key acceptance path has been removed.
+- `v0.2.0` was a pre-publication candidate and was never published to PyPI or as a GitHub Release.
+
 ## [0.2.0] - 2026-09-05
 
 ### Added

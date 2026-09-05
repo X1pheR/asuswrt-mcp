@@ -6,12 +6,12 @@
     "url": "https://github.com/X1pheR/asuswrt-mcp",
     "source": "github"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "hypershell-asuswrt-mcp",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       },
@@ -52,12 +52,6 @@
           "description": "SSH port (default: 22)",
           "isRequired": false,
           "format": "number"
-        },
-        {
-          "name": "ASUSWRT_SSH_STRICT_HOST_KEY",
-          "description": "Require the router host key to be trusted by the local SSH host-key store (default: false)",
-          "isRequired": false,
-          "format": "boolean"
         },
         {
           "name": "ASUSWRT_TIMEOUT_SECONDS",
