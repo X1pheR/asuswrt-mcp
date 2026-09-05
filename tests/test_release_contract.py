@@ -97,3 +97,83 @@ def test_paramiko_dependency_uses_supported_5x_release_line() -> None:
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     paramiko = next(dep for dep in project["dependencies"] if dep.startswith("paramiko"))
     assert paramiko == "paramiko>=5,<6"
+
+
+def test_public_readme_states_tested_compatibility_baseline() -> None:
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "## Compatibility" in text
+    compatibility = text.split("## Compatibility", 1)[1].split("\n## ", 1)[0]
+    assert "Python 3.11" in compatibility
+    assert "Python 3.13" in compatibility
+    assert "XT8PRO" in compatibility
+    assert "not" in compatibility.lower() and "all" in compatibility.lower()
+
+
+def test_changelog_has_unreleased_section_and_dated_first_release() -> None:
+    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert re.search(r"^## Unreleased\s*$", text, flags=re.MULTILINE)
+    assert re.search(r"^## \[0\.2\.0\] - 2026-09-05\s*$", text, flags=re.MULTILINE)
+    assert "## [0.2.0] - Unreleased" not in text
+
+
+def test_publication_github_metadata_is_complete_and_pinned() -> None:
+    required = [
+        ROOT / ".github" / "workflows" / "ci.yml",
+        ROOT / ".github" / "workflows" / "release.yml",
+        ROOT / ".github" / "workflows" / "scorecards.yml",
+        ROOT / ".github" / "dependabot.yml",
+        ROOT / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml",
+        ROOT / ".github" / "ISSUE_TEMPLATE" / "feature_request.yml",
+        ROOT / ".github" / "PULL_REQUEST_TEMPLATE.md",
+    ]
+    for path in required:
+        assert path.is_file(), f"missing public repository metadata: {path.relative_to(ROOT)}"
+
+    workflow_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in required
+        if path.suffix in {".yml", ".yaml"} and "workflows" in path.parts
+    )
+    uses = re.findall(r"^\s*-?\s*uses:\s*([^\s#]+)", workflow_text, flags=re.MULTILINE)
+    assert uses, "expected GitHub Actions uses entries"
+    for ref in uses:
+        assert re.search(r"@[0-9a-f]{40}$", ref), f"action is not pinned to a full commit SHA: {ref}"
+
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "./scripts/verify.sh" in ci
+    verifier = (ROOT / "scripts" / "verify.sh").read_text(encoding="utf-8")
+    assert "actionlint" in verifier
+
+    release = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+    for required_text in (
+        "./scripts/verify.sh",
+        "SHA256SUMS",
+        "actions/attest@",
+        "gh release create",
+        "--draft",
+        "gh release upload",
+        "gh release edit",
+        "--draft=false",
+        "EXPECTED_SHA",
+    ):
+        assert required_text in release
+
+    dependabot = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+    assert 'package-ecosystem: "uv"' in dependabot
+    assert 'versioning-strategy: "lockfile-only"' in dependabot
+    assert 'package-ecosystem: "github-actions"' in dependabot
+
+
+def test_public_workflows_do_not_reference_production_homelab_credentials() -> None:
+    workflows = ROOT / ".github" / "workflows"
+    text = "\n".join(path.read_text(encoding="utf-8") for path in workflows.glob("*.yml"))
+    forbidden = (
+        "ASUSWRT_MCP_SSH_PRIVATE_KEY",
+        "BSM_ACCESS_TOKEN",
+        "BITWARDEN_ACCESS_TOKEN",
+        "/srv/hypershell",
+        "docker.sock",
+        "HYPERSHELL_BSM",
+    )
+    for marker in forbidden:
+        assert marker not in text

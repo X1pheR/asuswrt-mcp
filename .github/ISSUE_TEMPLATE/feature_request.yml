@@ -1,0 +1,37 @@
+name: Feature request
+description: Propose a bounded ASUSWRT capability or product improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project intentionally does not expose arbitrary SSH, NVRAM or HTTP execution. New capabilities should solve a concrete operator workflow with the smallest safe data and mutation boundary.
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What router operation or question should the MCP make easier?
+    validations:
+      required: true
+  - type: textarea
+    id: current-gap
+    attributes:
+      label: Current gap
+      description: Why are the existing typed tools insufficient?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-shape
+    attributes:
+      label: Proposed behavior
+      description: Describe desired inputs, outputs and side effects at a semantic level; do not include real credentials or private router data.
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Boundary check
+      options:
+        - label: The request does not require arbitrary SSH, arbitrary NVRAM access or generic HTTP passthrough.
+          required: true
+        - label: Sensitive router data can remain redacted or reduced to the minimum needed for the workflow.
+          required: true

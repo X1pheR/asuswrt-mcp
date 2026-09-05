@@ -7,8 +7,8 @@ command -v docker >/dev/null 2>&1 || {
 }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-UV_VERSION="${UV_VERSION:-0.12.1}"
 TRIVY_VERSION="${TRIVY_VERSION:-0.74.0}"
+ACTIONLINT_VERSION="${ACTIONLINT_VERSION:-1.7.7}"
 TRIVY_CACHE_DIR="${TRIVY_CACHE_DIR:-${HOME}/.cache/asuswrt-mcp/trivy}"
 mkdir -p "$TRIVY_CACHE_DIR"
 
@@ -27,6 +27,13 @@ docker run --rm \
   -v "$ROOT:/work:ro" \
   "$UV_IMAGE" \
   bash -lc 'set -euo pipefail; cp -a /work /tmp/project; cd /tmp/project; mkdir -p /tmp/dist; uv build --out-dir /tmp/dist; test -n "$(find /tmp/dist -maxdepth 1 -type f -name "*.whl" -print -quit)"; test -n "$(find /tmp/dist -maxdepth 1 -type f -name "*.tar.gz" -print -quit)"; ls -1 /tmp/dist'
+
+
+echo "==> GitHub Actions workflow lint"
+docker run --rm \
+  -v "$ROOT:/repo:ro" \
+  -w /repo \
+  "rhysd/actionlint:${ACTIONLINT_VERSION}" -no-color
 
 echo "==> Trivy HIGH/CRITICAL source scan"
 docker run --rm \

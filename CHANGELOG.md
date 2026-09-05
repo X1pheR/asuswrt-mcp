@@ -2,7 +2,11 @@
 
 All notable downstream changes are recorded here.
 
-## [0.2.0] - Unreleased
+## Unreleased
+
+No unreleased downstream changes.
+
+## [0.2.0] - 2026-09-05
 
 ### Added
 
