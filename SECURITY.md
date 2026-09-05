@@ -12,7 +12,7 @@ If private vulnerability reporting is unavailable, contact the maintainer throug
 
 ## Security boundary
 
-This MCP deliberately excludes arbitrary SSH commands, arbitrary NVRAM access, firmware flashing/reset, bootloader operations and generic HTTP passthrough. Router mutations are disabled by default and require both `ASUSWRT_ALLOW_MUTATIONS=true` and explicit `confirm=true`; supported management tools also provide `dry_run=true`.
+This MCP deliberately excludes arbitrary SSH commands, arbitrary NVRAM access, firmware flashing/reset, bootloader operations and generic HTTP passthrough. Router mutations are disabled by default and require both `ASUSWRT_ALLOW_MUTATIONS=true` and explicit `confirm=true`; supported management tools also provide `dry_run=true`. Router SSH connections always require a pre-trusted host key from the local SSH host-key store; unknown or changed host keys are rejected and are never learned automatically.
 
 ## Public build and supply-chain boundary
 

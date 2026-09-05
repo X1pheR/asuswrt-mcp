@@ -109,11 +109,13 @@ def test_public_readme_states_tested_compatibility_baseline() -> None:
     assert "not" in compatibility.lower() and "all" in compatibility.lower()
 
 
-def test_changelog_has_unreleased_section_and_dated_first_release() -> None:
+def test_changelog_has_unreleased_section_and_dated_current_release() -> None:
     text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    version = re.escape(project["version"])
     assert re.search(r"^## Unreleased\s*$", text, flags=re.MULTILINE)
-    assert re.search(r"^## \[0\.2\.0\] - 2026-09-05\s*$", text, flags=re.MULTILINE)
-    assert "## [0.2.0] - Unreleased" not in text
+    assert re.search(rf"^## \[{version}\] - 2026-09-05\s*$", text, flags=re.MULTILINE)
+    assert f"## [{project['version']}] - Unreleased" not in text
 
 
 def test_publication_github_metadata_is_complete_and_pinned() -> None:

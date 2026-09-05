@@ -83,13 +83,14 @@ Use GitHub Issues for bug reports and feature requests after publication, and pu
 
 - Python 3.11+
 - An AsusWRT or AsusWRT-Merlin router with SSH access enabled
+- The router SSH host key pre-verified in the local SSH `known_hosts` store; unknown host keys are rejected
 - Network connectivity from the MCP client to the router
 
 ## Compatibility
 
 The maintained repository verifier tests the complete source contract on **Python 3.11** and **Python 3.13**. The accepted local runtime uses Python 3.12, so the current 3.11-3.13 interpreter range is exercised across verification and deployment.
 
-Live router acceptance for `v0.2.0` has been performed against a stock ASUSWRT runtime that identifies itself as **XT8PRO** with firmware **388_24854-g9c246e8**. The implementation also preserves upstream AsusWRT-Merlin compatibility assumptions where they remain valid, but this project does **not** claim that all ASUS router models or all AsusWRT/AsusWRT-Merlin firmware versions have been tested. Use the documented safety guards and validate behavior on other firmware families before relying on mutation tools.
+The `v0.2.0` pre-publication candidate was live-accepted against a stock ASUSWRT runtime that identifies itself as **XT8PRO** with firmware **388_24854-g9c246e8**. The `v0.2.1` candidate adds mandatory SSH host-key verification and must pass the same live acceptance before publication. The implementation also preserves upstream AsusWRT-Merlin compatibility assumptions where they remain valid, but this project does **not** claim that all ASUS router models or all AsusWRT/AsusWRT-Merlin firmware versions have been tested. Use the documented safety guards and validate behavior on other firmware families before relying on mutation tools.
 
 ## Installation
 
@@ -142,6 +143,8 @@ ASUSWRT_SSH_KEY_FILE=~/.ssh/id_ed25519
 # ASUSWRT_SSH_PORT=22
 # ASUSWRT_TIMEOUT_SECONDS=10
 ```
+
+Before starting the MCP server, verify the router's SSH host-key fingerprint through a trusted channel and add it to the account's normal SSH `known_hosts` store (for example by making one verified OpenSSH connection). The server never auto-accepts an unknown or changed host key.
 
 ## Usage
 
