@@ -1,31 +1,46 @@
-# AsusWRT MCP Server
+# ASUSWRT MCP
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Project Status: Active](https://img.shields.io/badge/status-active-green.svg)](https://github.com/Teeflo/asuswrt-mcp)
 
-mcp-name: io.github.teefloo/asuswrt-mcp
+mcp-name: io.github.x1pher/asuswrt-mcp
 
-Model Context Protocol (MCP) server for secure, controlled administration of AsusWRT and AsusWRT-Merlin routers via SSH.
+A community-maintained **independent downstream** of [teefloo/asuswrt-mcp](https://github.com/teefloo/asuswrt-mcp) for secure, controlled administration of AsusWRT and AsusWRT-Merlin routers over SSH. It is maintained as its own product and release line, while retaining clear upstream provenance. It is not affiliated with or endorsed by ASUS or the upstream project.
+
+## Why this downstream exists
+
+The upstream baseline already provides a strong allowlisted SSH-based MCP surface. This independent downstream exists because broader day-to-day router observability and several ASUS-specific correctness fixes were needed **without** adding arbitrary SSH/NVRAM access or exposing sensitive router data. It follows its own roadmap, release verification, package identity, and safety boundary rather than using upstream as the active release line.
+
+Compared with the pinned upstream baseline, the current candidate expands the surface from **47 to 67 tools** while keeping mutations guarded:
+
+- **19 additional read tools** for firewall posture, per-radio Wi-Fi configuration and scheduling, DNS Filter/Privacy, QoS, AiProtection, AiMesh, VLAN/guest segmentation, Dual-WAN, WPS, Smart Connect/roaming, firmware-update status, VPN-client health, WAN watchdog, logging, traffic-monitoring posture and auxiliary-service posture.
+- **Bounded WireGuard client management** for connect, disconnect and restart of already-configured client slots only; profile creation/import/edit and credential exposure remain excluded.
+- **Correctness fixes** for ASUS SSH enable-state semantics, WireGuard-client detection and bulk NVRAM reads where empty values could otherwise corrupt the following key/value record.
+- **Data minimization** for sensitive families: status/count metadata is preferred over resolver values, VPN peer/endpoint data, client policy bodies, credentials or raw rule payloads.
+
+Generic correctness fixes can be proposed upstream independently. This maintained downstream owns the broader opinionated capability and safety boundary described above. See [UPSTREAM.md](UPSTREAM.md) for the pinned provenance.
 
 ## Overview
 
-This MCP server provides AI assistants (like Claude, Cursor, etc.) with a safe interface to monitor and manage AsusWRT routers. It operates exclusively over SSH using allowlisted operations—no arbitrary command execution, no firmware modifications, and no factory resets.
+The server gives MCP clients a typed interface to monitor and manage AsusWRT routers. It operates exclusively over SSH using allowlisted operations: no arbitrary command execution, no firmware modifications and no factory-reset capability.
 
 ## Features
 
-### Read-Only Monitoring (42 tools)
+See the complete [tool reference](docs/tools.md) for every tool, access classification, inputs and mutation semantics.
+
+
+### Read-Only Monitoring (55 tools)
 
 | Category | Tools |
 |----------|-------|
-| **Identity & Health** | Router model, firmware version, uptime, load, memory |
-| **Network** | LAN/WAN details, DNS config, IPv6 status, routing table |
+| **Identity & Health** | Router model, firmware version, firmware update status, uptime, load, memory |
+| **Network** | LAN/WAN details, Dual-WAN status, VLAN/guest segmentation, DNS config, DNS Privacy/DNSSEC status, IPv6 status, routing table, QoS status, sanitized traffic-monitoring posture |
 | **Clients** | Connected clients, DHCP leases, ARP neighbors |
-| **Wireless** | Radio status, SSIDs, guest networks, client counts per band |
-| **Services** | Running processes, open ports, cron jobs |
+| **Wireless** | Radio status, SSIDs, guest networks, WPS state, Smart Connect/roaming, advanced radio features, sanitized per-radio scheduling state, client counts per band, AiMesh status |
+| **Services** | Running processes, open ports, cron jobs, sanitized local/remote syslog posture, auxiliary FTP/media/WebDAV/cloud/modem/printer/legacy-VPN posture |
 | **Storage** | USB devices, mounts, partitions, filesystem usage |
-| **Security** | UPnP, DDNS, Samba status, conntrack usage |
-| **VPN** | OpenVPN server, WireGuard, VPN client profiles |
+| **Security** | Firewall posture, port-trigger/DMZ/NAT-passthrough state, UPnP, DDNS, Samba status, conntrack usage, AiProtection status |
+| **VPN** | OpenVPN server, WireGuard, sanitized VPN client slot/profile counts and VPN Fusion policy counts |
 | **Administration** | Web admin ports, SSH/telnet access settings |
 | **Diagnostics** | SSH TCP/banner/auth diagnostics, config snapshot |
 
@@ -46,6 +61,7 @@ All mutation tools require:
 | `asuswrt_guest_lan_access` | Toggle LAN access for guest Wi-Fi |
 | `asuswrt_port_forwarding` | List, add, remove, enable/disable port forwarding rules |
 | `asuswrt_vpn_server` | Enable/disable OpenVPN server |
+| `asuswrt_wireguard_client` | Connect/disconnect/restart an already-configured WireGuard client slot |
 | `asuswrt_parental_access` | List, block, unblock, remove parental control rules |
 | `asuswrt_parental_block_all` | Toggle block-all mode |
 | `asuswrt_dhcp_reservation` | List, add, remove DHCP static reservations |
@@ -59,6 +75,10 @@ All mutation tools require:
 - **Confirmation required**: Mutations require explicit `confirm=True`
 - **SSH-only transport**: No exposure of the router's web API
 
+## Feedback and contributions
+
+Use GitHub Issues for bug reports and feature requests after publication, and pull requests for proposed changes. See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues must follow [SECURITY.md](SECURITY.md), and release changes are summarized in [CHANGELOG.md](CHANGELOG.md).
+
 ## Prerequisites
 
 - Python 3.11+
@@ -70,7 +90,7 @@ All mutation tools require:
 ### 1. Clone and setup
 
 ```bash
-git clone https://github.com/Teeflo/asuswrt-mcp.git
+git clone https://github.com/X1pheR/asuswrt-mcp.git
 cd asuswrt-mcp
 
 # Create virtual environment
@@ -104,10 +124,10 @@ nano .env           # Linux/macOS
 # Required: Router connection
 ASUSWRT_HOST=192.168.1.1
 ASUSWRT_SSH_USERNAME=admin
-ASUSWRT_SSH_PASSWORD=your_password
 
-# Optional: SSH key authentication
-# ASUSWRT_SSH_KEY_FILE=~/.ssh/id_rsa
+# Choose one SSH authentication method; key authentication is recommended.
+ASUSWRT_SSH_KEY_FILE=~/.ssh/id_ed25519
+# ASUSWRT_SSH_PASSWORD=your_password
 
 # Optional: Enable mutations (disabled by default)
 # ASUSWRT_ALLOW_MUTATIONS=true
@@ -157,18 +177,13 @@ npx @modelcontextprotocol/inspector python -m asuswrt_mcp.server
 
 ## Development
 
-### Run tests
+Run the canonical local verification gate:
 
 ```bash
-pip install -e ".[dev]"
-pytest
+./scripts/verify.sh
 ```
 
-### Run with live router integration tests
-
-```bash
-ASUSWRT_TEST_ROUTER=1 pytest
-```
+This runs the maintained compatibility tests, builds wheel/sdist artifacts and performs the HIGH/CRITICAL dependency, secret and misconfiguration scan. See [CONTRIBUTING.md](CONTRIBUTING.md) for development and safety requirements.
 
 ## Project Structure
 
@@ -187,8 +202,10 @@ asuswrt-mcp/
 │   ├── responses.py       # Tool response formatting
 │   ├── errors.py          # Custom exceptions
 │   └── serialization.py   # Safe serialization
-├── tests/                 # Test suite (69 tests)
+├── tests/                 # Unit and release-contract tests
 ├── .env.example           # Example configuration
+├── docs/tools.md          # Complete MCP tool reference
+├── scripts/verify.sh      # Canonical local verification gate
 ├── pyproject.toml         # Project metadata
 └── README.md              # This file
 ```

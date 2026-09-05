@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.teefloo/asuswrt-mcp",
-  "description": "Secure AsusWRT router administration via SSH — 42+ tools, guarded mutations",
+  "name": "io.github.x1pher/asuswrt-mcp",
+  "description": "Community-maintained AsusWRT MCP downstream with 67 bounded tools and guarded mutations",
   "repository": {
-    "url": "https://github.com/teefloo/asuswrt-mcp",
+    "url": "https://github.com/X1pheR/asuswrt-mcp",
     "source": "github"
   },
-  "version": "0.1.1",
+  "version": "0.2.0",
   "packages": [
     {
       "registryType": "pypi",
-      "identifier": "asuswrt-mcp",
-      "version": "0.1.1",
+      "identifier": "hypershell-asuswrt-mcp",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       },
@@ -30,8 +30,8 @@
         },
         {
           "name": "ASUSWRT_SSH_PASSWORD",
-          "description": "SSH password for router authentication",
-          "isRequired": true,
+          "description": "SSH password for router authentication (optional when ASUSWRT_SSH_KEY_FILE is used)",
+          "isRequired": false,
           "format": "string",
           "isSecret": true
         },
@@ -46,6 +46,30 @@
           "description": "Enable mutation tools (default: false)",
           "isRequired": false,
           "format": "boolean"
+        },
+        {
+          "name": "ASUSWRT_SSH_PORT",
+          "description": "SSH port (default: 22)",
+          "isRequired": false,
+          "format": "number"
+        },
+        {
+          "name": "ASUSWRT_SSH_STRICT_HOST_KEY",
+          "description": "Require the router host key to be trusted by the local SSH host-key store (default: false)",
+          "isRequired": false,
+          "format": "boolean"
+        },
+        {
+          "name": "ASUSWRT_TIMEOUT_SECONDS",
+          "description": "Router operation timeout in seconds (default: 10)",
+          "isRequired": false,
+          "format": "number"
+        },
+        {
+          "name": "ASUSWRT_CACHE_SECONDS",
+          "description": "Read cache duration in seconds (default: 5)",
+          "isRequired": false,
+          "format": "number"
         }
       ]
     }
