@@ -1,9 +1,8 @@
 name: Release
 
+# Publication is deliberately manual. Pushing an accepted tag is source transport,
+# not publication authorization.
 on:
-  push:
-    tags:
-      - "v*.*.*"
   workflow_dispatch:
     inputs:
       tag:
@@ -21,19 +20,20 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment: release
     permissions:
       contents: write
       id-token: write
       attestations: write
     env:
-      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
-      EXPECTED_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_sha || github.sha }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
     steps:
       - name: Check out exact release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+          ref: ${{ inputs.tag }}
 
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
@@ -55,11 +55,7 @@ jobs:
           git fetch origin main
           test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
           test "$(git rev-list -n1 "${RELEASE_TAG}")" = "${EXPECTED_SHA}"
-          if [ "${{ github.event_name }}" = "push" ]; then
-            test "${EXPECTED_SHA}" = "$(git rev-parse origin/main)"
-          else
-            git merge-base --is-ancestor "${EXPECTED_SHA}" origin/main
-          fi
+          git merge-base --is-ancestor "${EXPECTED_SHA}" origin/main
 
       - name: Verify exact tag
         run: ./scripts/verify.sh
@@ -105,6 +101,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${RELEASE_TAG}" dist/*.whl dist/*.tar.gz SHA256SUMS "hypershell-asuswrt-mcp-${RELEASE_TAG}.sigstore.json"
+
+      - name: Publish package to PyPI with Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: dist/
+          verify-metadata: true
+          attestations: true
+          verbose: false
 
       - name: Publish immutable GitHub Release
         env:

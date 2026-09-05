@@ -152,11 +152,23 @@ def test_publication_github_metadata_is_complete_and_pinned() -> None:
         "gh release create",
         "--draft",
         "gh release upload",
+        "pypa/gh-action-pypi-publish@",
+        "packages-dir: dist/",
+        "verify-metadata: true",
+        "attestations: true",
+        "environment: release",
+        "id-token: write",
         "gh release edit",
         "--draft=false",
         "EXPECTED_SHA",
     ):
         assert required_text in release
+
+    assert "\n  push:" not in release
+    assert "skip-existing" not in release
+    assert "PYPI_API_TOKEN" not in release
+    assert release.index("gh release upload") < release.index("pypa/gh-action-pypi-publish@")
+    assert release.index("pypa/gh-action-pypi-publish@") < release.index("gh release edit")
 
     dependabot = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
     assert 'package-ecosystem: "uv"' in dependabot
