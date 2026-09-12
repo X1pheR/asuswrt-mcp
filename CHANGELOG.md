@@ -6,6 +6,17 @@ All notable downstream changes are recorded here.
 
 No unreleased downstream changes.
 
+## [0.3.0] - 2026-09-12
+
+### Added
+
+- Add bounded private IPv4 remote-syslog management with explicit mutation guards, dry-run, idempotent updates and independent configuration readback. The tool changes only the remote destination/port and restarts the native logger; local logging remains unchanged.
+- Cover invalid/public destinations, invalid ports, authorization failures, disable behavior and failed readback with safety tests.
+
+### Fixed
+
+- Align the runtime version with package and MCP release metadata.
+
 ## [0.2.1] - 2026-09-05
 
 ### Security

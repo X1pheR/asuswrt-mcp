@@ -11,7 +11,7 @@ A community-maintained **independent downstream** of [teefloo/asuswrt-mcp](https
 
 The upstream baseline already provides a strong allowlisted SSH-based MCP surface. This independent downstream exists because broader day-to-day router observability and several ASUS-specific correctness fixes were needed **without** adding arbitrary SSH/NVRAM access or exposing sensitive router data. It follows its own roadmap, release verification, package identity, and safety boundary rather than using upstream as the active release line.
 
-Compared with the pinned upstream baseline, the current candidate expands the surface from **47 to 67 tools** while keeping mutations guarded:
+Compared with the pinned upstream baseline, the current candidate expands the surface from **47 to 68 tools** while keeping mutations guarded:
 
 - **19 additional read tools** for firewall posture, per-radio Wi-Fi configuration and scheduling, DNS Filter/Privacy, QoS, AiProtection, AiMesh, VLAN/guest segmentation, Dual-WAN, WPS, Smart Connect/roaming, firmware-update status, VPN-client health, WAN watchdog, logging, traffic-monitoring posture and auxiliary-service posture.
 - **Bounded WireGuard client management** for connect, disconnect and restart of already-configured client slots only; profile creation/import/edit and credential exposure remain excluded.

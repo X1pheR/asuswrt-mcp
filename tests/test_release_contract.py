@@ -32,6 +32,8 @@ def test_release_metadata_uses_downstream_identity_consistently() -> None:
     assert project["name"] == "hypershell-asuswrt-mcp"
     assert server["name"] == "io.github.x1pher/asuswrt-mcp"
     assert server["repository"]["url"] == "https://github.com/X1pheR/asuswrt-mcp"
+    from asuswrt_mcp import __version__
+    assert __version__ == project["version"]
     assert server["version"] == project["version"]
     assert server["packages"][0]["identifier"] == project["name"]
     assert server["packages"][0]["version"] == project["version"]
@@ -45,14 +47,14 @@ def test_public_tool_reference_covers_every_registered_tool_once() -> None:
 
     assert len(names) == len(set(names)), "duplicate tool rows in docs/tools.md"
     assert set(names) == registered
-    assert len(registered) == 67
+    assert len(registered) == 68
 
 
 def test_readme_explains_downstream_purpose_near_the_top() -> None:
     opening = "\n".join((ROOT / "README.md").read_text(encoding="utf-8").splitlines()[:40])
     assert "Why this downstream exists" in opening
     assert "teefloo/asuswrt-mcp" in opening
-    assert "47 to 67 tools" in opening
+    assert "47 to 68 tools" in opening
     assert "Correctness fixes" in opening
     assert "independent downstream" in opening.lower()
 
@@ -114,7 +116,7 @@ def test_changelog_has_unreleased_section_and_dated_current_release() -> None:
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     version = re.escape(project["version"])
     assert re.search(r"^## Unreleased\s*$", text, flags=re.MULTILINE)
-    assert re.search(rf"^## \[{version}\] - 2026-09-05\s*$", text, flags=re.MULTILINE)
+    assert re.search(rf"^## \[{version}\] - \d{{4}}-\d{{2}}-\d{{2}}\s*$", text, flags=re.MULTILINE)
     assert f"## [{project['version']}] - Unreleased" not in text
 
 

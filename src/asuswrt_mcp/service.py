@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import binascii
+import ipaddress
 from contextlib import contextmanager, suppress
 import socket
 import shlex
@@ -585,6 +586,7 @@ class RouterService:
                 "asuswrt_vpn_client_status",
                 "asuswrt_wan_watchdog_status",
                 "asuswrt_logging_status",
+                "asuswrt_remote_syslog",
                 "asuswrt_traffic_monitoring_status",
                 "asuswrt_auxiliary_services_status",
                 "asuswrt_upnp_status",
@@ -2127,6 +2129,79 @@ class RouterService:
         snapshot = {"config": self._ssh_config_snapshot_data()}
         self.last_snapshot = safe_data(snapshot)
         return tool_ok("asuswrt_config_snapshot", data=snapshot)
+
+
+    async def remote_syslog(
+        self,
+        *,
+        enabled: bool,
+        destination: str = "",
+        port: int = 514,
+        confirm: bool = False,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Configure only remote UDP syslog; retain local logging settings."""
+        require_mutation(self.settings.allow_mutations, confirm, dry_run)
+        target = ""
+        if enabled:
+            try:
+                address = ipaddress.IPv4Address(destination.strip())
+            except (ValueError, AttributeError) as exc:
+                raise RouterOperationError(
+                    code="invalid_syslog_destination",
+                    message="Remote syslog requires a private RFC1918 IPv4 address.",
+                ) from exc
+            if not any(address in network for network in (
+                ipaddress.IPv4Network("10.0.0.0/8"),
+                ipaddress.IPv4Network("172.16.0.0/12"),
+                ipaddress.IPv4Network("192.168.0.0/16"),
+            )):
+                raise RouterOperationError(
+                    code="invalid_syslog_destination",
+                    message="Remote syslog requires a private RFC1918 IPv4 address.",
+                )
+            if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:
+                raise RouterOperationError(
+                    code="invalid_syslog_port",
+                    message="Remote syslog port must be between 1 and 65535.",
+                )
+            target = str(address)
+        elif destination:
+            raise RouterOperationError(
+                code="invalid_syslog_destination",
+                message="Do not supply a destination when disabling remote syslog.",
+            )
+
+        with self._managed_ssh() as ssh:
+            before = ssh.get_nvram_many(["log_ipaddr", "log_port"])
+            before_target = before.get("log_ipaddr", "").strip()
+            before_port = before.get("log_port", "").strip()
+            updates: dict[str, str] = {"log_ipaddr": target}
+            if enabled:
+                updates["log_port"] = str(port)
+            would_change = any(before.get(key, "").strip() != value for key, value in updates.items())
+            data = {
+                "enabled_before": bool(before_target and before_target not in {"0.0.0.0", "::"}),
+                "enabled_after": enabled,
+                "port_before": self._nvram_int(before_port),
+                "port_after": port if enabled else self._nvram_int(before_port),
+                "destination_changed": before_target != target,
+                "would_change": would_change,
+            }
+            if dry_run:
+                return tool_ok("asuswrt_remote_syslog", dry_run=True, data=data)
+            if would_change:
+                ssh.set_nvram(updates, commit=True, service="restart_logger")
+            after = ssh.get_nvram_many(["log_ipaddr", "log_port"])
+            if any(after.get(key, "").strip() != value for key, value in updates.items()):
+                raise RouterOperationError(
+                    code="syslog_readback_mismatch",
+                    message="Remote syslog readback differs from requested state; observe before retrying.",
+                )
+        return tool_ok(
+            "asuswrt_remote_syslog", changed=would_change,
+            data={**data, "verified": True, "source": "ssh"},
+        )
 
     async def restart_service(
         self,

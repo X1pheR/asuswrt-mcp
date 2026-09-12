@@ -29,7 +29,7 @@ def test_server_registers_extended_read_tools() -> None:
         "asuswrt_traffic_monitoring_status",
         "asuswrt_auxiliary_services_status",
     } <= tool_names
-    assert len(tool_names) == 67
+    assert len(tool_names) == 68
 
 
 def test_wan_watchdog_status_is_registered_and_declared() -> None:

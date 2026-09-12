@@ -491,6 +491,24 @@ async def asuswrt_vpn_server(
     )
 
 
+
+@mcp.tool(description="Configure remote UDP syslog to one private IPv4 destination, or disable it, with confirmation and dry-run safeguards.")
+async def asuswrt_remote_syslog(
+    enabled: bool,
+    destination: str = "",
+    port: int = 514,
+    confirm: bool = False,
+    dry_run: bool = False,
+) -> dict:
+    return await _call(
+        "asuswrt_remote_syslog",
+        router_service.remote_syslog(
+            enabled=enabled, destination=destination, port=port,
+            confirm=confirm, dry_run=dry_run,
+        ),
+        dry_run=dry_run,
+    )
+
 @mcp.tool(description="Connect, disconnect, or restart an already-configured WireGuard client slot with confirmation and dry-run safeguards.")
 async def asuswrt_wireguard_client(
     action: Literal["connect", "disconnect", "restart"],
