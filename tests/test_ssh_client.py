@@ -47,3 +47,53 @@ def test_get_nvram_many_separates_empty_values_without_router_newline(monkeypatc
         "first": "",
         "second": "value",
     }
+
+
+def test_command_deadline_closes_channel_without_retry(monkeypatch) -> None:
+    import pytest
+    from types import SimpleNamespace
+    from asuswrt_mcp.errors import RouterOperationError
+    from asuswrt_mcp.clients import ssh as module
+    observed = {"closed": False, "calls": 0}
+    class Channel:
+        def recv_ready(self): return False
+        def recv_stderr_ready(self): return False
+        def exit_status_ready(self): return False
+        def close(self): observed["closed"] = True
+    channel = Channel()
+    class Transport:
+        def exec_command(self, *args, **kwargs):
+            observed["calls"] += 1
+            return None, SimpleNamespace(channel=channel), None
+    client = AsusRouterSshClient(Settings(host="192.168.1.1", ssh_username="admin", timeout_seconds=1))
+    client._client = Transport()
+    ticks = iter([0.0, 2.0])
+    monkeypatch.setattr(module.time, "monotonic", lambda: next(ticks))
+    with pytest.raises(RouterOperationError) as error:
+        client.run_command("service restart_logger")
+    assert error.value.code == "ssh_command_timeout"
+    assert observed == {"closed": True, "calls": 1}
+
+
+def test_command_drains_output_before_waiting_for_exit() -> None:
+    from types import SimpleNamespace
+    class Channel:
+        output = [b"state=ready\n"]
+        errors = [b"diagnostic\n"]
+        def recv_ready(self): return bool(self.output)
+        def recv_stderr_ready(self): return bool(self.errors)
+        def recv(self, _size): return self.output.pop(0)
+        def recv_stderr(self, _size): return self.errors.pop(0)
+        def exit_status_ready(self): return not self.output and not self.errors
+        def recv_exit_status(self):
+            assert self.exit_status_ready()
+            return 0
+    channel = Channel()
+    class Transport:
+        def exec_command(self, *args, **kwargs):
+            return None, SimpleNamespace(channel=channel), None
+    client = AsusRouterSshClient(Settings(host="192.168.1.1", ssh_username="admin"))
+    client._client = Transport()
+    result = client.run_command("bounded read")
+    assert result.stdout == "state=ready"
+    assert result.stderr == "diagnostic"

@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.x1pher/asuswrt-mcp",
-  "description": "Community-maintained AsusWRT MCP downstream with 67 bounded tools and guarded mutations",
+  "description": "Community-maintained AsusWRT MCP downstream with 68 bounded tools and guarded mutations",
   "repository": {
     "url": "https://github.com/X1pheR/asuswrt-mcp",
     "source": "github"
   },
-  "version": "0.2.1",
+  "version": "0.3.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "hypershell-asuswrt-mcp",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "transport": {
         "type": "stdio"
       },

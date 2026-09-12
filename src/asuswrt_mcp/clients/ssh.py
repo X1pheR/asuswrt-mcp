@@ -113,12 +113,29 @@ class AsusRouterSshClient:
             command,
             timeout=self._settings.timeout_seconds,
         )
-        exit_status = stdout.channel.recv_exit_status()
+        channel = stdout.channel
+        deadline = time.monotonic() + self._settings.timeout_seconds
+        output: list[bytes] = []
+        errors: list[bytes] = []
+        while True:
+            while channel.recv_ready():
+                output.append(channel.recv(65536))
+            while channel.recv_stderr_ready():
+                errors.append(channel.recv_stderr(65536))
+            if channel.exit_status_ready():
+                break
+            if time.monotonic() >= deadline:
+                channel.close()
+                raise RouterOperationError(
+                    code="ssh_command_timeout",
+                    message="Router command did not complete within its deadline; observe state before retrying.",
+                )
+            time.sleep(0.02)
         result = CommandResult(
             command=command,
-            stdout=stdout.read().decode(errors="replace").strip(),
-            stderr=stderr.read().decode(errors="replace").strip(),
-            exit_status=exit_status,
+            stdout=b"".join(output).decode(errors="replace").strip(),
+            stderr=b"".join(errors).decode(errors="replace").strip(),
+            exit_status=channel.recv_exit_status(),
         )
         if result.exit_status != 0:
             raise RouterOperationError(
