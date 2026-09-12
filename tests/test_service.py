@@ -506,6 +506,12 @@ class MockSshClient:
 
     def restart_service(self, service: str) -> object:
         self.service_calls.append(service)
+        if service == "restart_logger":
+            from asuswrt_mcp.service import LOGGING_PROCESS_COMMAND
+            destination = self.values.get("log_ipaddr", "")
+            port = self.values.get("log_port", "514")
+            forwarding = f" -R {destination}:{port}" if destination else ""
+            self.commands[LOGGING_PROCESS_COMMAND] = f"PID USER VSZ STAT COMMAND\n1 root 100 S syslogd{forwarding}\n2 root 100 S klogd\n"
         return object()
 
     def run_command(self, command: str) -> CommandResult:
@@ -2018,3 +2024,27 @@ async def test_remote_syslog_failed_readback_is_not_success(monkeypatch: pytest.
     with pytest.raises(Exception) as exc:
         await service.remote_syslog(enabled=True, destination="192.168.2.10", confirm=True)
     assert getattr(exc.value, "code") == "syslog_readback_mismatch"
+
+
+@pytest.mark.asyncio
+async def test_remote_syslog_repairs_runtime_only_without_nvram_write() -> None:
+    from asuswrt_mcp.service import LOGGING_PROCESS_COMMAND
+    service = make_service(prefer_ssh=True)
+    MockSshClient.values.update({"log_ipaddr": "192.168.2.10", "log_port": "514"})
+    MockSshClient.commands[LOGGING_PROCESS_COMMAND] = "PID USER VSZ STAT COMMAND\n1 root 100 S syslogd\n"
+    preview = await service.remote_syslog(enabled=True, destination="192.168.2.10", dry_run=True)
+    assert preview["data"]["configuration_change_required"] is False
+    assert preview["data"]["runtime_restart_required"] is True
+    result = await service.remote_syslog(enabled=True, destination="192.168.2.10", confirm=True)
+    assert result["changed"] is True and result["data"]["verified"] is True
+    assert MockSshClient.writes == []
+    assert MockSshClient.service_calls == ["restart_logger"]
+
+
+@pytest.mark.asyncio
+async def test_remote_syslog_does_not_accept_stored_state_with_inactive_forwarder(monkeypatch) -> None:
+    service = make_service(prefer_ssh=True)
+    monkeypatch.setattr(MockSshClient, "restart_service", lambda self, service: None)
+    with pytest.raises(Exception) as exc:
+        await service.remote_syslog(enabled=True, destination="192.168.2.10", confirm=True)
+    assert getattr(exc.value, "code") == "syslog_runtime_mismatch"

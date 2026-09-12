@@ -2183,7 +2183,27 @@ class RouterService:
             updates: dict[str, str] = {"log_ipaddr": target}
             if enabled:
                 updates["log_port"] = str(port)
-            would_change = any(before.get(key, "").strip() != value for key, value in updates.items())
+            config_changed = any(before.get(key, "").strip() != value for key, value in updates.items())
+            def runtime_matches() -> bool:
+                commands = [str(item.get("command", "")) for item in parse_process_table(
+                    ssh.run_command(LOGGING_PROCESS_COMMAND).stdout
+                )]
+                destinations: list[str] = []
+                for command in commands:
+                    tokens = command.split()
+                    if "syslogd" not in command or "-R" not in tokens:
+                        continue
+                    index = tokens.index("-R")
+                    if index + 1 < len(tokens):
+                        destinations.append(tokens[index + 1])
+                if not enabled:
+                    return not destinations
+                expected = {f"{target}:{port}"}
+                if port == 514:
+                    expected.add(target)
+                return any(value in expected for value in destinations)
+            runtime_changed = not runtime_matches()
+            would_change = config_changed or runtime_changed
             data = {
                 "enabled_before": bool(before_target and before_target not in {"0.0.0.0", "::"}),
                 "enabled_after": enabled,
@@ -2191,16 +2211,25 @@ class RouterService:
                 "port_after": port if enabled else self._nvram_int(before_port),
                 "destination_changed": before_target != target,
                 "would_change": would_change,
+                "configuration_change_required": config_changed,
+                "runtime_restart_required": would_change,
             }
             if dry_run:
                 return tool_ok("asuswrt_remote_syslog", dry_run=True, data=data)
+            if config_changed:
+                ssh.set_nvram(updates, commit=True)
             if would_change:
-                ssh.set_nvram(updates, commit=True, service="restart_logger")
+                ssh.restart_service("restart_logger")
             after = ssh.get_nvram_many(["log_ipaddr", "log_port"])
             if any(after.get(key, "").strip() != value for key, value in updates.items()):
                 raise RouterOperationError(
                     code="syslog_readback_mismatch",
                     message="Remote syslog readback differs from requested state; observe before retrying.",
+                )
+            if not runtime_matches():
+                raise RouterOperationError(
+                    code="syslog_runtime_mismatch",
+                    message="Stored remote syslog matches but the running logger does not; observe before retrying.",
                 )
         return tool_ok(
             "asuswrt_remote_syslog", changed=would_change,
