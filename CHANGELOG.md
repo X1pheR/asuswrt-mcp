@@ -16,6 +16,7 @@ No unreleased downstream changes.
 ### Fixed
 
 - Bound SSH command completion and drain output before waiting for exit; a timeout requires observation before retry.
+- Use wide BusyBox process output so logger arguments are not silently truncated.
 - Report active remote forwarding separately from stored remote-syslog configuration, and reconcile a stopped forwarder without rewriting unchanged NVRAM.
 - Align the runtime version with package and MCP release metadata.
 

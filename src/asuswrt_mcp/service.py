@@ -389,7 +389,7 @@ DDNS_KEYS = [
     "ddns_status",
 ]
 LOGGING_KEYS = ["log_ipaddr", "log_port", "log_level", "log_size", "log_path"]
-LOGGING_PROCESS_COMMAND = "ps | grep -E 'syslogd|klogd' | grep -v grep || true"
+LOGGING_PROCESS_COMMAND = "ps w | grep -E 'syslogd|klogd' | grep -v grep || true"
 WAN_WATCHDOG_KEYS = [
     "wandog_enable",
     "wandog_interval",

@@ -372,7 +372,7 @@ class MockSshClient:
     service_calls: list[str] = []
     commands: dict[str, str] = {
         "cat /proc/uptime": "48409.39 82525.31",
-        "ps | grep -E 'syslogd|klogd' | grep -v grep || true": (
+        "ps w | grep -E 'syslogd|klogd' | grep -v grep || true": (
             "1779 admin 3100 S /sbin/syslogd -m 0 -S -R 192.168.2.200:514 -O /jffs/private-syslog-must-never-be-returned -s 256 -l\n"
             "1781 admin 3100 S /sbin/klogd -c 5"
         ),
