@@ -1652,6 +1652,10 @@ class RouterService:
             "remote_syslog_configured": bool(
                 remote_destination and remote_destination not in {"0.0.0.0", "::"}
             ),
+            "remote_syslog_runtime_active": any(
+                "syslogd" in command and "-R " in command
+                for command in process_commands
+            ),
             "remote_syslog_port": self._nvram_int(raw.get("log_port", "")),
             "local_log_level_code": self._nvram_int(raw.get("log_level", "")),
             "local_log_size_kb": self._nvram_int(raw.get("log_size", "")),

@@ -1521,6 +1521,7 @@ async def test_logging_status_redacts_remote_destination_and_log_path() -> None:
         "syslogd_running": True,
         "klogd_running": True,
         "remote_syslog_configured": True,
+        "remote_syslog_runtime_active": True,
         "remote_syslog_port": 514,
         "local_log_level_code": 6,
         "local_log_size_kb": 256,

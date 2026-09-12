@@ -15,6 +15,8 @@ No unreleased downstream changes.
 
 ### Fixed
 
+- Bound SSH command completion and drain output before waiting for exit; a timeout requires observation before retry.
+- Report active remote forwarding separately from stored remote-syslog configuration.
 - Align the runtime version with package and MCP release metadata.
 
 ## [0.2.1] - 2026-09-05
