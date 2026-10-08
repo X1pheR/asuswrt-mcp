@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "name": "ASUSWRT MCP",
+  "category": "Infrastructure",
+  "kind": "mcp-server",
+  "upstream": {
+    "repository": "teefloo/asuswrt-mcp",
+    "reason": "Adds broader router observability, management capabilities and safety behavior required by the maintained Hypershell deployment."
+  }
+}
